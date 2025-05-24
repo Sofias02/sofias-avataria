@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tipografía base y suavizado de scroll */
+body {
+  @apply bg-gray-50 text-gray-900 font-sans leading-relaxed antialiased;
+}
+
+/* Enlaces visuales */
+a {
+  @apply text-blue-600 hover:text-blue-800 underline transition-colors;
+}
+
+/* Botones base */
+button {
+  @apply px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition;
+}
+
+/* Inputs y textareas */
+input,
+textarea {
+  @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500;
+}

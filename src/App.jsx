@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
+// Páginas
 import Splash from './pages/Splash';
 import Home from './pages/Home';
 import Reception from './pages/Reception';
@@ -12,11 +13,12 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Suscripciones from './pages/Suscripciones';
 
+// Utilidades
 import { seedAvatars } from './utils/seedAvatars';
 
 export default function App() {
   useEffect(() => {
-    seedAvatars();
+    seedAvatars(); // Inicializa datos al arrancar
   }, []);
 
   return (
@@ -32,6 +34,8 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/perfil" element={<Profile />} />
         <Route path="/suscripciones" element={<Suscripciones />} />
+        {/* Ruta fallback para 404 */}
+        <Route path="*" element={<div className="p-8 text-center">Página no encontrada</div>} />
       </Routes>
     </Router>
   );
