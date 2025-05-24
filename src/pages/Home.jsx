@@ -1,12 +1,26 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
-    <div className="h-screen bg-cover bg-center flex flex-col items-center justify-center" style={{ backgroundImage: "url('/images/edificio.png')" }}>
-      <div className="bg-white bg-opacity-80 p-6 rounded-xl shadow-lg text-center">
-        <h1 className="text-4xl font-bold mb-4">Bienvenido a Sofia’s — AvatarIA</h1>
-        <p className="mb-4 text-lg">Tu red de avatares con alma</p>
-        <a href="/chat" className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition">Entrar a la Recepción</a>
+    <div
+      className="w-screen h-screen bg-no-repeat bg-contain bg-center flex flex-col items-center justify-end text-white relative"
+      style={{ backgroundImage: "url('/images/entrada.png')" }}
+    >
+      <div className="absolute inset-0 bg-black bg-opacity-50 z-0" />
+      <div className="relative z-10 mb-10 bg-black bg-opacity-70 px-6 py-4 rounded-xl text-center shadow-xl backdrop-blur-sm max-w-md mx-auto">
+        <h1 className="text-3xl font-bold mb-2 tracking-tight leading-tight drop-shadow-lg">
+          Avatar<span className="text-blue-400">IA</span>
+        </h1>
+        <h2 className="text-md font-light mb-4 italic drop-shadow-sm">
+          La Red de Avatares con Alma
+        </h2>
+        <Link
+          to="/auth"
+          className="px-6 py-2 bg-white text-black text-sm rounded-xl font-semibold hover:bg-gray-200 transition shadow-md"
+        >
+          Iniciar Experiencia
+        </Link>
       </div>
     </div>
   );

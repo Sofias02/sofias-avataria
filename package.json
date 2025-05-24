@@ -7,9 +7,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
     "framer-motion": "^10.16.4",
+    "openai": "^4.103.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.6.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.14",
