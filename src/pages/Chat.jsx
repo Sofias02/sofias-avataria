@@ -1,5 +1,3 @@
-// Archivo: src/pages/Chat.jsx
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import openai from '../openaiClient';
@@ -57,15 +55,11 @@ export default function Chat() {
 
   const uploadFile = async (file) => {
     const filename = `${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage
-      .from('chat-uploads')
-      .upload(filename, file);
-
+    const { error } = await supabase.storage.from('chat-uploads').upload(filename, file);
     if (error) {
-      console.error('Upload error:', error.message);
+      console.error('Error al subir archivo:', error.message);
       return null;
     }
-
     const { data } = supabase.storage.from('chat-uploads').getPublicUrl(filename);
     return data.publicUrl;
   };
@@ -81,7 +75,7 @@ export default function Chat() {
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+        Authorization: `Bearer ${import.meta.env.VITE_OPENAI_KEY}`
       },
       body: formData
     });
