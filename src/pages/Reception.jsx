@@ -1,8 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import FloatingMenuButton from '../components/FloatingMenuButton';
 import { useTranslation } from 'react-i18next';
+import SidebarMenu from '../components/SidebarMenu';
 
 const avatars = [
   { name: 'Isabel', img: '/images/isabel.png', path: '/chat/isabel' },
@@ -12,6 +12,7 @@ const avatars = [
 export default function Reception() {
   const { isSubscribed } = useContext(AuthContext);
   const { t, i18n } = useTranslation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleChangeLanguage = (e) => {
     i18n.changeLanguage(e.target.value);
@@ -23,7 +24,7 @@ export default function Reception() {
       style={{ backgroundImage: "url('/images/oficinas.png')" }}
     >
       {/* Selector de idioma */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 z-40">
         <select
           onChange={handleChangeLanguage}
           defaultValue={i18n.language}
@@ -38,7 +39,7 @@ export default function Reception() {
         </select>
       </div>
 
-      {/* Contenedor principal */}
+      {/* Contenido principal */}
       <div className="bg-white/90 p-8 max-w-3xl mx-auto mt-20 rounded-xl shadow-xl text-center">
         <h2 className="text-3xl font-bold mb-6">{t('chooseAvatar')}</h2>
 
@@ -55,10 +56,9 @@ export default function Reception() {
           ))}
         </div>
 
-        {/* Botones */}
         <div className="flex flex-col items-center gap-4 mt-8">
           <Link
-            to="/catalogo"
+            to="/suscripciones"
             className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
             {t('subscribe')}
@@ -72,8 +72,19 @@ export default function Reception() {
         </div>
       </div>
 
-      {/* Menú flotante para suscriptores */}
-      {isSubscribed && <FloatingMenuButton />}
+      {/* Botón flotante con logo para abrir el sidebar */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button onClick={() => setSidebarOpen(true)} title="Abrir menú">
+          <img
+            src="/images/logo-sofias.png"
+            alt="Menú"
+            className="h-16 w-16 rounded-full shadow-lg hover:scale-110 transition-transform"
+          />
+        </button>
+      </div>
+
+      {/* Sidebar lateral */}
+      <SidebarMenu open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
     </div>
   );
 }

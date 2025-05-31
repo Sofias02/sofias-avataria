@@ -15,15 +15,18 @@ import Profile from './pages/Profile';
 import Suscripciones from './pages/Suscripciones';
 import Catalogo from './pages/Catalogo';
 import SofiasLLC from './pages/SofiasLLC';
+import AdminAvatars from './pages/AdminAvatars'; // 👉 Importación añadida
 
 import { seedAvatars } from './utils/seedAvatars';
 
 export default function App() {
-  const { user, isSubscribed } = useContext(AuthContext);
+  const { user, isSubscribed, isAdmin, loading } = useContext(AuthContext); // ✅ isAdmin incluido
 
   useEffect(() => {
     seedAvatars();
   }, []);
+
+  if (loading) return null; // 🔒 Esperar hasta que cargue el estado de autenticación
 
   return (
     <Router>
@@ -37,26 +40,13 @@ export default function App() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/perfil"
-          element={user ? (
-            isSubscribed ? <Profile /> : <Navigate to="/suscripciones" />
-          ) : (
-            <Navigate to="/auth" />
-          )}
-        />
-
-        <Route
-          path="/catalogo"
-          element={user ? (
-            isSubscribed ? <Catalogo /> : <Navigate to="/suscripciones" />
-          ) : (
-            <Navigate to="/auth" />
-          )}
-        />
-
+        <Route path="/perfil" element={user ? <Profile /> : <Navigate to="/auth" />} />
+        <Route path="/catalogo" element={user ? <Catalogo /> : <Navigate to="/auth" />} />
         <Route path="/suscripciones" element={<Suscripciones />} />
         <Route path="/asi-es-sofias" element={<SofiasLLC />} />
+
+        {/* ✅ Ruta protegida por isAdmin */}
+        <Route path="/admin/avatars" element={user && isAdmin ? <AdminAvatars /> : <Navigate to="/inicio" />} />
       </Routes>
     </Router>
   );

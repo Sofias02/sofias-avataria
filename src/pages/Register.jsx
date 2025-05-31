@@ -1,3 +1,4 @@
+// src/pages/Register.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
@@ -15,12 +16,23 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError('');
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
     });
-    if (error) setError(error.message);
-    else {
+
+    if (signUpError) {
+      setError(signUpError.message);
+    } else {
+      const user = data.user;
+
+      // ✅ Crear registro en la tabla profiles (si no tienes trigger en Supabase)
+      if (user) {
+        await supabase
+          .from('profiles')
+          .insert([{ id: user.id, email: user.email, is_subscribed: false }]);
+      }
+
       setSuccess(true);
       setTimeout(() => navigate('/auth'), 3000);
     }

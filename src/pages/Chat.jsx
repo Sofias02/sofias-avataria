@@ -1,65 +1,45 @@
+// src/pages/Chat.jsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import openai from '../openaiClient';
+import { useParams, useNavigate } from 'react-router-dom';
 
 export default function Chat() {
+  const { avatarId } = useParams();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [avatar, setAvatar] = useState(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [memorySummary, setMemorySummary] = useState('');
+  const [showCall, setShowCall] = useState(false);
 
   useEffect(() => {
     const loadChat = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('avatar_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.avatar_id) return;
-
-      const { data: avatar } = await supabase
+      const { data: avatarData } = await supabase
         .from('avatars')
         .select('*')
-        .eq('id', profile.avatar_id)
+        .eq('id', avatarId)
         .single();
 
-      setAvatar(avatar);
+      setAvatar(avatarData);
 
-      const { data: history } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('avatar_id', avatar.id)
-        .order('created_at');
-
-      setMessages(history || []);
-
-      const { data: memory } = await supabase
-        .from('memory_snapshots')
-        .select('summary')
-        .eq('user_id', user.id)
-        .eq('avatar_id', avatar.id)
-        .single();
-
-      if (memory?.summary) setMemorySummary(memory.summary);
+      // Nuevo chat limpio
+      setMessages([]);
+      setMemorySummary('');
     };
 
     loadChat();
-  }, []);
+  }, [avatarId]);
 
   const uploadFile = async (file) => {
     const filename = `${Date.now()}-${file.name}`;
     const { error } = await supabase.storage.from('chat-uploads').upload(filename, file);
-    if (error) {
-      console.error('Error al subir archivo:', error.message);
-      return null;
-    }
+    if (error) return null;
     const { data } = supabase.storage.from('chat-uploads').getPublicUrl(filename);
     return data.publicUrl;
   };
@@ -67,7 +47,6 @@ export default function Chat() {
   const transcribeAudio = async (url) => {
     const blob = await fetch(url).then(res => res.blob());
     const file = new File([blob], 'audio.mp3', { type: 'audio/mpeg' });
-
     const formData = new FormData();
     formData.append('file', file);
     formData.append('model', 'whisper-1');
@@ -82,20 +61,6 @@ export default function Chat() {
 
     const data = await response.json();
     return data.text || '';
-  };
-
-  const summarizeMemory = async (pastMessages) => {
-    const summaryPrompt = [
-      { role: 'system', content: 'Resume esta conversación en una sola frase para futura referencia:' },
-      ...pastMessages.map(m => ({ role: m.role === 'avatar' ? 'assistant' : 'user', content: m.content }))
-    ];
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: summaryPrompt,
-    });
-
-    return response.choices[0].message.content;
   };
 
   const handleSend = async () => {
@@ -124,14 +89,11 @@ export default function Chat() {
       attachment: attachmentUrl
     };
 
-    await supabase.from('messages').insert(userMsg);
+    const updatedMessages = [...messages, userMsg];
 
-    const recentMsgs = messages.slice(-15);
     const context = [
       { role: 'system', content: avatar.prompt },
-      { role: 'system', content: memorySummary || '' },
-      ...recentMsgs.map(m => ({ role: m.role === 'avatar' ? 'assistant' : 'user', content: m.content })),
-      { role: 'user', content: contentToSend },
+      ...updatedMessages.map(m => ({ role: m.role === 'avatar' ? 'assistant' : 'user', content: m.content }))
     ];
 
     const completion = await openai.chat.completions.create({
@@ -147,9 +109,20 @@ export default function Chat() {
       content: botContent,
     };
 
-    await supabase.from('messages').insert(botMsg);
+    await supabase.from('messages').insert([userMsg, botMsg]);
 
-    const updatedSummary = await summarizeMemory([...recentMsgs, userMsg, botMsg]);
+    const summaryPrompt = [
+      { role: 'system', content: 'Resume esta conversación en una sola frase para futura referencia:' },
+      ...updatedMessages.map(m => ({ role: m.role === 'avatar' ? 'assistant' : 'user', content: m.content })),
+      { role: 'assistant', content: botContent }
+    ];
+
+    const summaryResponse = await openai.chat.completions.create({
+      model: 'gpt-4',
+      messages: summaryPrompt
+    });
+
+    const updatedSummary = summaryResponse.choices[0].message.content;
     setMemorySummary(updatedSummary);
 
     await supabase.from('memory_snapshots').upsert({
@@ -159,7 +132,7 @@ export default function Chat() {
       updated_at: new Date()
     }, { onConflict: ['user_id', 'avatar_id'] });
 
-    setMessages([...messages, userMsg, botMsg]);
+    setMessages([...updatedMessages, botMsg]);
     setInput('');
     setFile(null);
     setLoading(false);
@@ -167,8 +140,13 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <div className="bg-blue-700 text-white text-xl font-bold p-4">
+      <div className="bg-blue-700 text-white text-xl font-bold p-4 flex justify-between items-center">
+        <button onClick={() => navigate('/catalogo')} className="text-white text-2xl">←</button>
         Chat con {avatar?.name || '...'}
+        <button
+          onClick={() => setShowCall(true)}
+          className="bg-yellow-500 px-3 py-1 rounded text-sm hover:bg-yellow-600"
+        >📞 Llamar</button>
       </div>
 
       <div className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -214,6 +192,19 @@ export default function Chat() {
           Enviar
         </button>
       </div>
+
+      {showCall && (
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50">
+          <img src={avatar?.image_url} alt={avatar?.name} className="w-40 h-40 rounded-full shadow-lg mb-4" />
+          <p className="text-white text-xl mb-4">Llamada con {avatar?.name} en curso...</p>
+          <button
+            onClick={() => setShowCall(false)}
+            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+          >
+            Terminar Llamada
+          </button>
+        </div>
+      )}
     </div>
   );
 }
